@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { getProductTickets, sendProductTicket } from "@/features/products/actions";
 import { useState, useEffect } from "react";
-import { sendProductTicket } from "@/actions/sendProductTicketAction";
-import { getProductTickets } from "@/actions/getProductTicketsAction";
 
 export default function ProductTicketForm({
   productId,

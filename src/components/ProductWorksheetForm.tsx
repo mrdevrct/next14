@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { submitWorksheetAnswers } from "@/features/products/actions";
 import { useState, FormEvent } from "react";
-import { submitWorksheetAnswers } from "@/actions/submitWorksheetAnswersAction";
 
 export default function ProductWorksheetForm({
   worksheetId,

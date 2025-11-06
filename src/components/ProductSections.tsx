@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { getProductSections } from "@/features/products/actions";
 import { useEffect, useState } from "react";
-import { getProductSections } from "@/actions/getProductSectionsAction";
 
 export default function ProductSections({ productId }: { productId: number }) {
   const [sections, setSections] = useState<any>(null);

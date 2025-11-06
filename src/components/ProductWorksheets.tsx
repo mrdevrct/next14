@@ -2,8 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getProductWorksheets } from "@/actions/getProductWorksheetsAction";
-import { submitWorksheetAnswers } from "@/actions/submitWorksheetAnswersAction"; // اکشن ارسال پاسخ‌ها
+import { getProductWorksheets, submitWorksheetAnswers } from "@/features/products/actions"; // اکشن ارسال پاسخ‌ها
 
 export default function ProductWorksheets({
   productId,

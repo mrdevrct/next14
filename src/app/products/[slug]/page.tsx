@@ -1,72 +1,76 @@
 /* eslint-disable react-hooks/error-boundaries */
-import { apiFetchServer } from "@/lib/apiServer";
-import { API_ENDPOINTS } from "@/config/api";
-import { cookies } from "next/headers";
+// app/(main)/products/[slug]/page.tsx
 import { notFound } from "next/navigation";
-import ProductTicketForm from "@/components/ProductTicketForm";
-import ProductSections from "@/components/ProductSections";
-import ProductWorksheets from "@/components/ProductWorksheets";
-import ProductWorksheetForm from "@/components/ProductWorksheetForm";
+import { getServerAuth } from "@/lib/auth";
+import {
+  getProduct,
+  checkProductPurchase,
+  checkProductInCart,
+} from "@/features/products/actions";
+import ProductPurchasedView from "@/components/ProductPurchasedView";
+import ProductClient from "@/components/ProductClient";
 
 export const revalidate = 3600;
 
-export default async function ProductPage({
-  params,
-}: {
+interface ProductPageProps {
   params: { slug: string };
-}) {
+}
+
+export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = params;
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
 
   try {
-    const productPromise = apiFetchServer<{
-      id: number;
-      title: string;
-      description: string;
-      price: number;
-      has_purchased?: boolean;
-    }>(API_ENDPOINTS.product.single(slug), { revalidate: 3600 });
-
-    const userProductPromise = token
-      ? apiFetchServer<{ has_purchased: boolean }>(
-          API_ENDPOINTS.product.single(slug),
-          { cache: "no-store" }
-        ).catch(() => ({ has_purchased: false }))
-      : Promise.resolve({ has_purchased: false });
-
-    const [product, userData] = await Promise.all([
-      productPromise,
-      userProductPromise,
+    // ✅ Parallel fetching برای بهبود performance
+    const [product, auth, purchaseStatus] = await Promise.all([
+      getProduct(slug),
+      getServerAuth(),
+      checkProductPurchase(slug),
     ]);
 
-    if (!product) notFound();
-    product.has_purchased = userData.has_purchased;
+    if (!product) {
+      notFound();
+    }
+
+    // اگر خریداری شده، نمایش محتوای دوره
+    if (purchaseStatus.has_purchased) {
+      return (
+        <ProductPurchasedView
+          product={product}
+          user={auth.user}
+        />
+      );
+    }
+
+    // اگر خریداری نشده، چک کنیم در سبد خرید هست یا نه
+    const isInCart = auth.isLoggedIn
+      ? await checkProductInCart(product.id)
+      : false;
 
     return (
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <h1 className="text-3xl font-bold">{product.title}</h1>
-        <p className="text-gray-600">{product.description}</p>
-        <p className="text-xl font-semibold">{product.price} تومان</p>
-
-        {product.has_purchased ? (
-          <>
-            <button className="bg-green-600 text-white py-2 px-4 rounded-lg">
-              مشاهده دوره 🎓
-            </button>
-            <ProductTicketForm productId={product.id} />
-            <ProductSections productId={product.id} />
-            <ProductWorksheets productId={product.id} />
-          </>
-        ) : (
-          <button className="bg-blue-600 text-white py-2 px-4 rounded-lg">
-            خرید دوره 💳
-          </button>
-        )}
-      </div>
+      <ProductClient
+        product={product}
+        isLoggedIn={auth.isLoggedIn}
+        isInCart={isInCart}
+      />
     );
-  } catch (err) {
-    console.error("Error fetching product:", err);
+  } catch (error) {
+    console.error("❌ Error in ProductPage:", error);
     notFound();
+  }
+}
+
+// ✅ Generate Metadata
+export async function generateMetadata({ params }: ProductPageProps) {
+  try {
+    const product = await getProduct(params.slug);
+    
+    return {
+      title: product.name,
+      description: product.description,
+    };
+  } catch {
+    return {
+      title: "محصول یافت نشد",
+    };
   }
 }

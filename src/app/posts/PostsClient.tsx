@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiFetchClient } from "@/lib/apiClient";
-import { API_ENDPOINTS } from "@/config/api";
+import { apiFetchClient } from "@/lib/api/client";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 interface PostsClientProps {
   initialPosts: any[];
